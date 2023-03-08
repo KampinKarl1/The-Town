@@ -1,0 +1,139 @@
+using System;
+using System.Collections.Generic;
+
+public class TheTown
+{
+    public static float timePassedPerTick = .1f;
+    public static Product _Sword = new Product("Sword", 100);
+    public static Product _Shield = new Product("Shield", 75);
+    
+    List<Producer> producers = new List<Producer>();
+    
+    public static void Main()
+    {
+        var town = new TheTown();        
+        
+        ProducersProduct swords = new ProducersProduct(_Sword, 1.0f, 5);
+        ProducersProduct shields = new ProducersProduct(_Shield, 1.1f, 3);
+        
+        Producer blackSmith = new Producer("Bob", new ProducersProduct[]{swords, shields});
+        
+        town.producers.Add(blackSmith); 
+        
+        Dictionary<Product, int> counts = new Dictionary<Product, int>();
+        
+        foreach (var producer in town.producers)
+        {
+            for(int i = 0; i < producer.productsProduced.Length; i++)
+            {
+                var product = producer.productsProduced[i].product;
+                
+                if (!counts.ContainsKey(product))
+                    counts.Add(product, 0);
+            }
+        }
+        
+        int ticks = 1000;
+        
+        while (ticks -- > 0)
+        {
+            foreach (var p in town.producers)
+            {
+                var ps = p.Produce();
+                
+                if (ps.Count > 0)
+                    for(int i = 0; i < ps.Count; i ++)
+                    {
+                        counts[ps[i].product]+= ps[i].numProduced;
+                    }
+            }
+        }
+        
+        foreach(var kvp in counts)
+        {
+            Console.WriteLine($"{kvp.Value} were produced of {kvp.Key.name}.");
+        }
+    }
+}
+
+public class Product: Object
+{
+    public readonly string name;
+    
+    public Product(string _name, int startValue)
+    {
+        name = _name;
+        
+        monetaryValue = startValue;
+    }
+    
+    public int monetaryValue;
+}
+
+
+
+public class ProducersProduct
+{
+       public ProducersProduct(Product _product, float rate, int num)
+       {
+           product = _product;
+           prodRate = rate;
+           prodPerRate = num;
+       }
+    
+    public Product product;
+    public float prodRate;
+    public int prodPerRate;
+    
+    private float time = 0f;
+    public bool Produce()
+    {
+        time+= TheTown.timePassedPerTick;
+        
+        if (time >= prodRate)
+        {
+            time = 0f;
+           return true; 
+        }
+        return false;
+    }
+}
+
+public struct Production 
+{
+    public Production (Product p, int num)
+    {
+        product = p;
+        numProduced = num;
+    }
+    public Product product;
+    public int numProduced;
+}
+                                        
+                                        
+public class Producer : Object
+{
+    public readonly string name;
+    
+    public Producer (string _name, ProducersProduct [] products)
+    {
+        name = _name;
+        
+        productsProduced = products;
+    }
+    
+    public ProducersProduct [] productsProduced;
+    
+    public List<Production> Produce()
+    {
+        var result = new List<Production>();
+        
+        foreach (var prod in productsProduced)
+            if (prod.Produce())
+            {
+               result.Add(new Production(prod.product, prod.prodPerRate));
+            }
+            
+        return result;
+    }
+}
